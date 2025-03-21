@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  aw-server:
+    build: .
+    ports:
+      - "5600:5600"
+    volumes:
+      # Монтируем том для сохранения данных вне контейнера.
+      # При необходимости скорректируйте путь (например, если база создаётся не в /app/aw_server).
+      - ./data/aw-server:/root/.local/share/activitywatch/aw-server
+    environment:
+      # При необходимости можно задать переменные окружения, например уровень логирования.
+      - LOG_LEVEL=debug
+
+volumes:
+  aw_server_data:
