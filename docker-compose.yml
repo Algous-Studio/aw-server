@@ -12,6 +12,7 @@ services:
     environment:
       # При необходимости можно задать переменные окружения, например уровень логирования.
       - LOG_LEVEL=debug
+      - SKIP_WEBUI=true
 
 volumes:
   aw_server_data:
