@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git make nodejs npm && rm -rf /var/lib/apt/lists/*
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
@@ -27,9 +27,10 @@ RUN if [ "$SKIP_WEBUI" != "true" ]; then \
       echo "Skipping webui build"; \
     fi
     
-# Копируем исходный код проекта
-COPY . .
 
+    # Копируем исходный код проекта
+COPY . .
+COPY ./aw-webui /app/aw-webui
 # Если aw-server слушает на определённом порту (например, 5600), открываем его
 EXPOSE 5600
 

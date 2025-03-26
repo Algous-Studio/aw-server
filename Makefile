@@ -5,7 +5,7 @@ build: aw-webui
 
 aw-webui:
 	mkdir -p aw_server/static/
-ifeq ($(SKIP_WEBUI),true) # Skip building webui if SKIP_WEBUI is true
+ifeq ($(SKIP_WEBUI),false) # Skip building webui if SKIP_WEBUI is true
 	@echo "Skipping building webui"
 else
 	rm -rf aw_server/static/*
