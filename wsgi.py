@@ -21,7 +21,6 @@ def create_app() -> AWFlask:
         cors_origins=cors_origins,
         custom_static={},
     )
-
     # Закрываем пул только при завершении процесса воркера
     def _close_storage():
         storage = getattr(app.api.db, "storage_strategy", None)
