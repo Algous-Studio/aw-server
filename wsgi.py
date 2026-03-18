@@ -1,5 +1,6 @@
 # wsgi.py
 import os, atexit
+from aw_server.auth import configure_basic_auth
 from aw_server.server import AWFlask
 from aw_datastore import get_storage_methods
 
@@ -21,6 +22,7 @@ def create_app() -> AWFlask:
         cors_origins=cors_origins,
         custom_static={},
     )
+    configure_basic_auth(app)
     # Закрываем пул только при завершении процесса воркера
     def _close_storage():
         storage = getattr(app.api.db, "storage_strategy", None)
