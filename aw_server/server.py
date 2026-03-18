@@ -16,6 +16,7 @@ from flask_cors import CORS
 
 from . import rest
 from .api import ServerAPI
+from .auth import load_basic_auth_config, register_basic_auth
 from .custom_static import get_custom_static_blueprint
 from .log import FlaskLogHandler
 
@@ -50,6 +51,9 @@ class AWFlask(Flask):
             static_folder=static_folder,
             static_url_path=static_url_path,
         )
+        auth_config = load_basic_auth_config()
+        if auth_config:
+            register_basic_auth(self, auth_config)
         self.config["HOST"] = host  # needed for host-header check
         with self.app_context():
             _config_cors(cors_origins, testing)

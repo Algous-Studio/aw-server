@@ -1,7 +1,14 @@
+import base64
 import random
 from datetime import datetime, timedelta
 
 import pytest
+from aw_server.server import AWFlask
+
+
+def _basic_auth_headers(username: str, password: str):
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    return {"Authorization": f"Basic {token}"}
 
 
 @pytest.fixture()
@@ -24,6 +31,68 @@ def test_info(flask_client):
     r = flask_client.get("/api/0/info")
     assert r.status_code == 200
     assert r.json["testing"]
+
+
+def test_basic_auth_protects_ui_and_general_api(monkeypatch):
+    monkeypatch.setenv("AW_AUTH_USERNAME", "admin")
+    monkeypatch.setenv("AW_AUTH_PASSWORD", "secret")
+
+    client = AWFlask("127.0.0.1", testing=True).test_client()
+
+    r = client.get("/")
+    assert r.status_code == 401
+    assert r.headers["WWW-Authenticate"] == 'Basic realm="ActivityWatch"'
+
+    r = client.get("/api/0/buckets/")
+    assert r.status_code == 200
+
+    r = client.post(
+        "/api/0/query/",
+        json={"timeperiods": [], "query": []},
+    )
+    assert r.status_code == 401
+
+    r = client.post(
+        "/api/0/query/",
+        json={"timeperiods": [], "query": []},
+        headers=_basic_auth_headers("admin", "secret"),
+    )
+    assert r.status_code != 401
+
+
+def test_basic_auth_keeps_watcher_ingest_anonymous(monkeypatch):
+    monkeypatch.setenv("AW_AUTH_USERNAME", "admin")
+    monkeypatch.setenv("AW_AUTH_PASSWORD", "secret")
+
+    client = AWFlask("127.0.0.1", testing=True).test_client()
+    bucket_id = "test-auth-watcher"
+
+    r = client.get("/api/0/info")
+    assert r.status_code == 200
+
+    r = client.post(
+        f"/api/0/buckets/{bucket_id}",
+        json={"client": "test", "type": "test", "hostname": "test"},
+    )
+    assert r.status_code == 200
+
+    r = client.post(
+        f"/api/0/buckets/{bucket_id}/heartbeat?pulsetime=1",
+        json={"timestamp": datetime.now(), "duration": 0, "data": {"random": 1}},
+    )
+    assert r.status_code == 200
+
+    r = client.get(f"/api/0/buckets/{bucket_id}/events")
+    assert r.status_code == 200
+
+    r = client.delete(f"/api/0/buckets/{bucket_id}")
+    assert r.status_code == 401
+
+    r = client.delete(
+        f"/api/0/buckets/{bucket_id}",
+        headers=_basic_auth_headers("admin", "secret"),
+    )
+    assert r.status_code == 200
 
 
 def test_buckets(flask_client, bucket, benchmark):
